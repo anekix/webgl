@@ -7,11 +7,15 @@ canvas.width = window.innerWidth
 canvas.height = window.innerHeight
 document.body.appendChild(canvas)
 
+//craete a canavs webgl context as a base to draw upon
 var gl = canvas.getContext('webgl')
-
+//  clear canvas with any color you want
 gl.clearColor(0.75, 0.85, 0.8, 1.0)
 gl.clear(gl.COLOR_BUFFER_BIT)
 
+
+// webgl pipeline need 2 shaders 1) vertex shader & fragment shader
+// crate a vertex shader & compile it
 var vertexShader = gl.createShader(gl.VERTEX_SHADER)
 gl.shaderSource(vertexShader, [
   'attribute vec2 position;',
@@ -21,6 +25,9 @@ gl.shaderSource(vertexShader, [
 ].join('\n'))
 gl.compileShader(vertexShader)
 
+
+
+// create a fragment shader & compile it 
 var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
 gl.shaderSource(fragmentShader, [
   'precision highp float;',
@@ -31,26 +38,46 @@ gl.shaderSource(fragmentShader, [
 ].join('\n'))
 gl.compileShader(fragmentShader)
 
+
+//craete a program that will be offloaded to the GPU
 var program = gl.createProgram()
+
+//attach vertex shader & fragment shaders to the the program
 gl.attachShader(program, vertexShader)
 gl.attachShader(program, fragmentShader)
+
+//link program
 gl.linkProgram(program)
 
+//define vertex positions as float32 array elemnets
 var vertices = new Float32Array([
-  -0.5,-0.5,
-  0.5,-0.5,
-  0.0,0.5
+  -0.5, -0.5,
+  0.5,  -0.5,
+  0.0,   0.5
 ])
 
+//create  buffer where data will be stored
 var buffer = gl.createBuffer()
+
+// mark the given buffer as current/active buffer
 gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+
+//add data to the active buffer
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
 
+//tell webgl to use the progr that we created
 gl.useProgram(program)
+
+//get location of the uniform color in our program 
 program.color = gl.getUniformLocation(program, 'color')
+
+//now since we know the location of `color` uniform we can set values for it
 gl.uniform4fv(program.color, [0.3, 1, 0, 1.0])
 
+
+//get location of the attribute `position` defined in our shader program
 program.position = gl.getAttribLocation(program, 'position')
+
 gl.enableVertexAttribArray(program.position)
 gl.vertexAttribPointer(program.position, 2, gl.FLOAT, false, 0, 0)
 
