@@ -1,0 +1,121 @@
+<html>
+<body></body>
+</html>
+<script type="text/javascript">
+var canvas = document.createElement('canvas')
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight
+document.body.appendChild(canvas)
+
+//craete a canavs webgl context as a base to draw upon
+var gl = canvas.getContext('webgl')
+//  clear canvas with any color you want
+gl.clearColor(0.75, 0.85, 0.8, 1.0)
+gl.clear(gl.COLOR_BUFFER_BIT)
+
+
+// webgl pipeline need 2 shaders 1) vertex shader & fragment shader
+// crate a vertex shader & compile it
+var vertexShader = gl.createShader(gl.VERTEX_SHADER)
+gl.shaderSource(vertexShader, [
+  'attribute vec4 aVertexColor;',
+  'varying lowp vec4 vColor;',
+
+  'attribute vec2 position;',
+  'void main() {',
+    'gl_Position = vec4(position, 0.0, 1.0);',
+     'vColor = aVertexColor;',
+
+  '}'
+].join('\n'))
+gl.compileShader(vertexShader)
+
+	if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+		console.error('ERROR compiling vertex shader!', gl.getShaderInfoLog(vertexShader));
+	}
+
+
+// create a fragment shader & compile it 
+var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+gl.shaderSource(fragmentShader, [
+  'varying lowp vec4 vColor;',
+  'void main() {',
+    'gl_FragColor = vColor;',
+  '}'
+].join('\n'))
+gl.compileShader(fragmentShader)
+
+	if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+		console.error('ERROR compiling fragment shader!', gl.getShaderInfoLog(fragmentShader));
+	}
+
+
+//craete a program that will be offloaded to the GPU
+var program = gl.createProgram()
+
+//attach vertex shader & fragment shaders to the the program
+gl.attachShader(program, vertexShader)
+gl.attachShader(program, fragmentShader)
+
+//link program
+gl.linkProgram(program)
+
+	gl.linkProgram(program);
+	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		console.error('ERROR linking program!', gl.getProgramInfoLog(program));
+	}
+	gl.validateProgram(program);
+	if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+		console.error('ERROR validating program!', gl.getProgramInfoLog(program));
+	}
+
+//define vertex positions as float32 array elemnets
+var vertices = new Float32Array([
+  -0.5, -0.5,
+  0.5,  -0.5,
+  0.0,   0.5
+])
+
+
+
+
+//create  buffer where data will be stored
+var buffer = gl.createBuffer()
+// mark the given buffer as current/active buffer
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+//add data to the active buffer
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+
+
+const colors = [
+    1,  0.5,  1.0,  1.0,    // white
+    0,  1.0,  0.3,  1.0,    // red
+    0.0,  0.0,  0.8,  1.0,    // green
+  ];
+
+const colorBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+
+
+//tell webgl to use the progr that we created
+gl.useProgram(program)
+
+//get location of the uniform color in our program 
+program.aVertexColor = gl.getAttribLocation(program, 'aVertexColor'),
+// gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.vertexAttribPointer(program.aVertexColor,4,gl.FLOAT,false,0,0);
+gl.enableVertexAttribArray(program.aVertexColor);
+  
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer)//this line is veeaeery important!
+
+//get location of the attribute `position` defined in our shader program
+program.position = gl.getAttribLocation(program, 'position')
+gl.enableVertexAttribArray(program.position)
+gl.vertexAttribPointer(program.position, 2, gl.FLOAT, false, 0, 0)
+
+
+gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2)
+</script>
